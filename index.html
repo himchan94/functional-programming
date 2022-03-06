@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      const log = console.log;
+
+      // 명령형 코드
+      //   function f(list, length) {
+      //   let i = 0;
+      //   let acc = 0;
+      //   for (const a of list) {
+      //     if (a % 2) {
+      //       acc = acc + a * a;
+      //       log(++i);
+      //       if (++i == length) break;
+      //     }
+      //   }
+      //   log(acc);
+      // }
+    </script>
+
+    <script>
+      // 함수형 프로그래밍에서 if 문이 한 번일 때는 필터라고 부른다.
+      function* filter(f, iter) {
+        for (const a of iter) {
+          if (f(a)) yield a;
+        }
+      }
+
+      // 어떤 값을 다른 값으로 바꾸는 것을 함수형 프로그래밍에서는 map으로 추상화 되어있음
+
+      function* map(f, iter) {
+        for (const a of iter) {
+          yield f(a);
+        }
+      }
+
+      // 명령형 코드란, 그 코드가 구체적으로 어떤 작업을 하는 지 기술하는 코드
+
+      // 자바스크립트에서 순회가 가능한 값을 이터러블이라고 부른다.
+      function take(length, iter) {
+        let res = [];
+        for (const a of iter) {
+          res.push(a);
+          if (res.length === length) return res;
+        }
+
+        return res;
+      }
+
+      function reduce(f, acc, iter) {
+        if (arguments.length === 2) {
+          iter = acc[Symbol.iterator]();
+          acc = iter.next().value;
+        }
+
+        for (const a of iter) {
+          acc = f(acc, a);
+        }
+        return acc;
+      }
+
+      const curry =
+        (f) =>
+        (a, ...bs) =>
+          bs.length ? f(a, ...bs) : (...bs) => f(a, ...bs);
+
+      const add = curry((a, b) => a + b);
+
+      // 리스트 프로세싱
+      const go = (...as) => reduce((a, f) => f(a), as);
+
+      go(
+        10,
+        (a) => a + 1,
+        (a) => a + 10,
+        log
+      );
+
+      // 함수형 프로그래밍 코드는 맨 오른쪽부터 왼쪽으로 가면서 읽으면 된다.
+
+      const f = (list, length) =>
+        reduce(
+          add,
+          0,
+          take(
+            length,
+            map(
+              (a) => a * a,
+              filter((a) => a % 2, list)
+            )
+          )
+        );
+
+      const f2 = (list, length) =>
+        go(
+          list,
+          (list) => filter((a) => a % 2, list),
+          (list) => map((a) => a * a, list),
+          (list) => take(length, list),
+          (list) => reduce(add, 0, list)
+        );
+
+      function main() {
+        log(f2([1, 2, 3, 4, 5], 1));
+        log(f2([1, 2, 3, 4, 5], 2));
+        log(f2([1, 2, 3, 4, 5], 3));
+      }
+
+      main();
+    </script>
+  </body>
+</html>
